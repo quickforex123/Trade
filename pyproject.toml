@@ -1,0 +1,86 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qft"
+version = "0.1.0"
+description = "QFT — systematic NSE F&O trading research and execution platform (Groww)"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Proprietary" }
+dependencies = [
+    "pydantic>=2.7,<3",
+    "pydantic-settings>=2.2,<3",
+    "httpx>=0.27,<1",
+    "numpy>=1.26,<3",
+    "pandas>=2.2,<3",
+    "pyarrow>=16,<22",
+    "PyYAML>=6.0,<7",
+    "anthropic>=0.40",
+    "fastapi>=0.111,<1",
+    "uvicorn>=0.30,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2",
+    "pytest-timeout>=2.3",
+    "hypothesis>=6.100",
+    "ruff>=0.5",
+    "mypy>=1.10",
+    "freezegun>=1.5",
+]
+# The live Groww adapters import the official SDK only at runtime, in the one
+# process that needs it. Not part of the default install.
+groww = [
+    "growwapi==1.5.0",
+]
+
+[project.scripts]
+qft = "qft.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["qft*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+timeout = 120
+markers = [
+    "unit: fast isolated tests",
+    "integration: multi-component tests",
+    "chaos: failure-injection tests",
+    "property: property-based tests",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "UP", "C4", "SIM", "S"]
+ignore = [
+    "E501",   # line length handled by formatter
+    "S101",   # asserts are fine in tests; src uses explicit raises
+    "S311",   # random used only for jitter/simulation, never crypto
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S", "SIM117"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_unused_ignores = true
+warn_redundant_casts = true
+no_implicit_optional = true
+check_untyped_defs = true
+
+# The safety-critical core is checked strictly.
+[[tool.mypy.overrides]]
+module = ["qft.domain.*", "qft.risk.*", "qft.execution.*", "qft.brokers.*"]
+strict = true
+
+[[tool.mypy.overrides]]
+module = ["growwapi.*", "pandas.*", "pyarrow.*", "yaml.*"]
+ignore_missing_imports = true

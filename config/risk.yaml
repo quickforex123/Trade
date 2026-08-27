@@ -1,0 +1,41 @@
+# Deterministic risk firewall limits. See docs/RISK_POLICY.md.
+# Changing this file requires a process restart; changes are audit-logged.
+# NO code path (and no LLM) may write to this file.
+
+initial_capital: 50000
+
+max_capital_at_risk_per_trade_pct: 0.015   # ₹750 at ₹50k
+max_premium_per_trade: 6000
+max_daily_loss_pct: 0.03                   # ₹1,500 at ₹50k
+max_weekly_loss_pct: 0.06
+max_drawdown_halt_pct: 0.10
+
+max_concurrent_positions: 1
+max_lots_per_order: 1
+max_orders_per_day: 6
+max_orders_per_minute: 2
+
+instrument_allowlist: ["NIFTY"]
+allowed_weekly_expiries: 2
+allow_monthly_expiry: true
+
+max_spread_pct_options: 0.0075
+max_spread_pct_futures: 0.0005
+min_open_interest: 1500000
+min_reward_risk: 1.2
+max_slippage_pct: 0.015
+
+signal_ttl_seconds: 20
+max_tick_age_seconds: 3
+max_snapshot_age_seconds: 90
+
+session:
+  entry_open_ist: "09:20:00"
+  entry_close_ist: "15:00:00"
+  square_off_ist: "15:10:00"
+
+# RBI policy / budget / election-result days etc. — maintained by hand.
+event_blackout_dates: []
+
+allow_short_options: false
+require_research_opinion: false
