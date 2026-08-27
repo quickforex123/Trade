@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.python-version
+
+# Tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Environment / secrets — NEVER commit credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# Runtime state and data
+data/cache/
+data/instruments/
+*.sqlite
+*.sqlite3
+*.db
+logs/
+runs/
+artifacts/
+
+# Editors
+.idea/
+.vscode/
+*.swp
+.DS_Store
