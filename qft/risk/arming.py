@@ -58,9 +58,6 @@ class LiveArming:
             armed_at = datetime.fromisoformat(payload["armed_at"])
         except (ValueError, KeyError, json.JSONDecodeError):
             return False
-        now = now_utc()
         if armed_at < self._process_start:
             return False  # stale token from a previous life — restart disarms
-        if now - armed_at > timedelta(hours=self._max_hours):
-            return False
-        return True
+        return now_utc() - armed_at <= timedelta(hours=self._max_hours)

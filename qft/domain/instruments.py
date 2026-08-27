@@ -7,6 +7,7 @@ the broker's instrument master — never constants (NIFTY lot size alone went
 
 from __future__ import annotations
 
+import math
 from datetime import date
 
 from pydantic import BaseModel, ConfigDict, model_validator
@@ -64,4 +65,12 @@ class Instrument(BaseModel):
         if price < 0:
             raise ValueError("price must be non-negative")
         ticks = round(price / self.tick_size)
+        return round(ticks * self.tick_size, 2)
+
+    def ceil_to_tick(self, price: float) -> float:
+        """Round UP to the tick grid — for marketable buy limits that must not
+        land below the ask."""
+        if price < 0:
+            raise ValueError("price must be non-negative")
+        ticks = math.ceil(round(price / self.tick_size, 9))
         return round(ticks * self.tick_size, 2)

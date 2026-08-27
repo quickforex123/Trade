@@ -40,6 +40,48 @@ market data → validation → features/regime ─┬→ quant strategies ─┐
 `BACKTEST → PAPER → SHADOW → LIVE` — strategies are promoted only by objective criteria and
 demoted automatically. LIVE is off by default; a restart can never re-arm it.
 
+## Repository layout
+
+```
+qft/domain        typed frozen contracts (instruments, quotes, intents, orders, opinions)
+qft/config        validated settings + risk-limit schema (config/risk.yaml)
+qft/data          NSE calendar, Groww read-only adapter, snapshot validation, PIT store
+qft/costs         Indian F&O cost model (brokerage/STT/exchange/SEBI/stamp/GST)
+qft/features      deterministic derivatives feature engine
+qft/regime        regime classifier with hysteresis
+qft/strategies    Strategy interface + ORB / VWAP-trend research strategies
+qft/backtest      event-driven simulator, metrics, survival gates, walk-forward
+qft/research      Claude committee -> ResearchOpinion (fail-closed), memories
+qft/fusion        deterministic signal fusion -> TradeIntent
+qft/risk          THE FIREWALL: RiskEngine, kill switches, LIVE arming
+qft/brokers       BrokerAdapter: Simulated, Paper, GrowwReadOnly, GrowwExecution
+qft/execution     idempotent execution daemon (persist-before-submit)
+qft/portfolio     event-sourced SQLite audit ledger
+qft/reconciliation broker-vs-ledger truth reconciliation
+qft/runtime       TradingLoop composition root (PAPER/SHADOW/LIVE)
+qft/monitoring    read-only dashboard, scrubbed structured logging
+```
+
+## Development
+
+```bash
+uv venv --python 3.12 .venv && uv pip install -p .venv/bin/python -e ".[dev]"
+.venv/bin/python -m pytest -q          # 88 tests
+.venv/bin/python -m ruff check .
+.venv/bin/python -m mypy qft/domain qft/risk qft/execution qft/brokers
+.venv/bin/python -m qft.cli backtest --synthetic-days 60   # mechanics demo only
+.venv/bin/python -m qft.cli dashboard
+```
+
+Dependencies are locked in `requirements.lock`. Upstream TradingAgents is pinned
+at `a33fd4c0` as a conceptual reference only (nothing vendored).
+
+## Current status
+
+See [`GO_LIVE_READINESS_REPORT.md`](GO_LIVE_READINESS_REPORT.md) — build phase
+complete, evidence phase (real data → backtests → paper → shadow) not started.
+**LIVE is disabled and must stay disabled until that report is fully green.**
+
 ## Safety invariants (non-negotiable)
 
 1. No LLM ever places, sizes, or authorizes an order.

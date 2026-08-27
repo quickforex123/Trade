@@ -11,6 +11,7 @@ Fail-closed everywhere: any missing/ambiguous input rejects the intent.
 from __future__ import annotations
 
 from collections import deque
+from collections.abc import Callable
 from datetime import date, datetime, timedelta
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -54,8 +55,8 @@ class RiskEngine:
         calendar: NSECalendar,
         kill_switch: KillSwitchManager,
         environment: Environment,
-        allowed_expiries_provider: "callable[[], list[date]] | None" = None,
-        live_armed_check: "callable[[], bool] | None" = None,
+        allowed_expiries_provider: Callable[[], list[date]] | None = None,
+        live_armed_check: Callable[[], bool] | None = None,
     ) -> None:
         self._limits = limits
         self._calendar = calendar

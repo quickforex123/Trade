@@ -13,6 +13,7 @@ import sqlite3
 import threading
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 from qft.domain.enums import Environment, Side
 from qft.domain.ids import new_id
@@ -56,7 +57,7 @@ class Ledger:
     def append(
         self,
         event_type: LedgerEventType,
-        payload: dict,
+        payload: dict[str, Any],
         intent_id: str | None = None,
         order_ref: str | None = None,
         ts: datetime | None = None,
@@ -96,7 +97,7 @@ class Ledger:
         event_type: LedgerEventType | None = None,
         since: datetime | None = None,
         order_ref: str | None = None,
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         query = "SELECT event_id, ts, type, intent_id, order_ref, payload FROM events WHERE 1=1"
         args: list[str] = []
         if event_type is not None:
@@ -137,7 +138,7 @@ class Ledger:
             positions[fill.trading_symbol] = _apply_fill(
                 positions.get(fill.trading_symbol), fill
             )
-        return {k: v for k, v in positions.items()}
+        return dict(positions)
 
     def realized_pnl_between(self, start: datetime, end: datetime) -> float:
         """Realized P&L from fills in [start, end) minus fees recorded there."""

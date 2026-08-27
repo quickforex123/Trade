@@ -19,7 +19,7 @@ are extended (allow_short_options=false structurally).
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -27,7 +27,6 @@ from qft.config.risk_limits import RiskLimits
 from qft.costs.model import CostModel
 from qft.domain.enums import Direction, OptionType, OrderType, RecommendedAction, Regime, Side
 from qft.domain.ids import deterministic_id
-from qft.domain.instruments import Instrument
 from qft.domain.market import OptionQuote, VerifiedMarketSnapshot
 from qft.domain.research import ResearchOpinion
 from qft.domain.signals import Signal, TradeIntent
@@ -99,11 +98,10 @@ class SignalFusionEngine:
         ask = quote.ask or quote.ltp
         if ask <= 0:
             return None
-        limit_price = instrument.round_to_tick(ask)
+        limit_price = instrument.ceil_to_tick(ask)  # marketable: never below the ask
         lots = 1  # sizing floor; the risk engine enforces budgets and can only reject
         quantity = lots * instrument.lot_size
 
-        premium = limit_price * quantity
         stop_points = round(limit_price * self._cfg.stop_fraction_of_premium, 2)
         est_cost = self._costs.option_round_trip(
             Side.BUY, limit_price, limit_price * (1 - self._cfg.stop_fraction_of_premium), quantity

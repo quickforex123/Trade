@@ -77,7 +77,7 @@ def compute_metrics(
     max_dd = float(-dd.min()) if len(dd) else 0.0
     # drawdown duration: longest run below previous peak
     duration = longest = 0
-    for x, p in zip(path, peaks):
+    for x, p in zip(path, peaks, strict=True):
         if x < p:
             duration += 1
             longest = max(longest, duration)

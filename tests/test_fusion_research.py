@@ -66,8 +66,9 @@ def _chain_row(strike: float, ot: OptionType, ltp: float, oi: float = 2e6,
 def make_verified_snapshot(calendar, spot=24_500.0):
     rows = []
     for strike in (24_300, 24_400, 24_500, 24_600, 24_700):
-        premium_ce = max(30.0, spot - strike + 120)
-        premium_pe = max(30.0, strike - spot + 120)
+        # cheap weekly-style premiums so 1 lot fits a Rs.50k risk budget
+        premium_ce = max(30.0, spot - strike + 32)
+        premium_pe = max(30.0, strike - spot + 32)
         rows.append(_chain_row(strike, OptionType.CE, premium_ce))
         rows.append(_chain_row(strike, OptionType.PE, premium_pe))
     chain = OptionChain(

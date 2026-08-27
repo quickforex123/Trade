@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - run: pip install -r requirements.lock && pip install -e . --no-deps
+      - run: pytest -q
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install "ruff==0.14.*"
+      - run: ruff check .
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: mypy qft/domain qft/risk qft/execution qft/brokers
+
+  boundaries:
+    name: architecture boundaries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: forbidden imports (risk/execution must never import LLM code)
+        run: |
+          python - <<'EOF'
+          import pathlib, re, sys
+          violations = []
+          rules = {
+              "qft/risk": ["qft.research", "anthropic"],
+              "qft/execution": ["qft.research", "qft.fusion", "anthropic"],
+              "qft/research": ["qft.risk", "qft.execution", "qft.brokers"],
+              "qft/monitoring": ["qft.brokers"],
+          }
+          for pkg, banned in rules.items():
+              for path in pathlib.Path(pkg).rglob("*.py"):
+                  text = path.read_text()
+                  for b in banned:
+                      if re.search(rf"^\s*(from|import)\s+{re.escape(b)}", text, re.M):
+                          violations.append(f"{path}: imports {b}")
+          if violations:
+              print("ARCHITECTURE BOUNDARY VIOLATIONS:")
+              print("\n".join(violations))
+              sys.exit(1)
+          print("boundaries clean")
+          EOF
+      - name: no secrets in tree
+        run: |
+          if grep -rInE "(sk-ant-[A-Za-z0-9]|GROWW_API_SECRET\s*=\s*['\"][^'\"]+)" --include="*.py" --include="*.yaml" --include="*.yml" --include="*.md" . ; then
+            echo "potential secret committed"; exit 1
+          fi
+          echo "no secrets found"
